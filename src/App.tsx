@@ -53,15 +53,17 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <main className="flex flex-col p-8 gap-4 min-h-screen items-center">
-        <div className="flex w-full justify-between">
-          <div className="flex gap-4 items-end">
-            <h1 className="text-4xl font-bold">Ribondung Block Cipher</h1>
+        <div className="flex w-full justify-between items-end lg:items-start">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            <h1 className="text-3xl lg:text-4xl font-bold">
+              Ribondung Block Cipher
+            </h1>
             <p>Riau - Bogor - Bandung Cipher</p>
           </div>
           <ModeToggle />
         </div>
         <Separator />
-        <div className="flex flex-1 w-1/2 items-center">
+        <div className="flex flex-1 w-[95%] lg:w-1/2 items-center">
           <Card className="w-full h-fit">
             <CardHeader>
               <CardTitle>Encrypt / Decrypt</CardTitle>
