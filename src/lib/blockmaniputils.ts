@@ -52,17 +52,16 @@ export function checkAndModifyKey(key: string) {
 }
 
 /* Shifts the bits of a 128-bit block to the left */
-export function shiftLeft128(bits128: Uint8Array): Uint8Array{
+export function shiftLeft128(bits128: Uint8Array): void{
     const carry = bits128[0] & 0x80 ? 1 : 0; // Capture the carry bit from the leftmost byte
     for (let i = 0; i < bits128.length - 1; i++) {
         bits128[i] = (bits128[i] << 1) | (bits128[i + 1] & 0x80 ? 1 : 0); // Shift left and add the carry bit from the next byte
     }
     bits128[bits128.length - 1] = (bits128[bits128.length - 1] << 1) | carry; // Shift left and add the captured carry bit
-    return bits128;
 }
 
-/* Shifts the bits of a 128-bit block to the right */
-export function shiftRight128(bits128: Uint8Array): Uint8Array{
+/* Shifts the bits of a 128-bit block to the right*/
+export function shiftRight128(bits128: Uint8Array): void{
     const n = bits128.length;
     const carry = bits128[n - 1] & 0x01; // Capture the carry bit from the rightmost bit of the last byte
     for (let i = n - 1; i > 0; i--) {
@@ -70,24 +69,38 @@ export function shiftRight128(bits128: Uint8Array): Uint8Array{
     }
     bits128[0] = bits128[0] >> 1; // Shift right the leftmost byte
     bits128[0] |= carry << 7; // Add the captured carry bit to the rightmost bit of the leftmost byte
-    return bits128;
+}
+
+/* XOR Operation 1 block */
+export function xor(block: Uint8Array, element: Uint8Array) {
+    const block_temp = new Uint8Array(block.length)
+    block_temp.set(block)
+    for (let i = 0; i < block.length; i++) {
+        block_temp[i] = block_temp[i] ^ element[i]
+    }
+    return block_temp
 }
 
 /* Encrypts a 128-bit block using a 128-bit key */
 export function tempEncryption(block: Uint8Array, key: Uint8Array): Uint8Array {
+    const block_temp = new Uint8Array(block.length)
+    block_temp.set(block)
     for (let i = 0; i < block.length; i++) {
-        block[i] = block[i] ^ key[i]
+        block_temp[i] = block_temp[i] ^ key[i]
     }
-    return shiftLeft128(block)
+    shiftLeft128(block_temp)
+    return block_temp
 }
 
 /* Decrypts a 128-bit block using a 128-bit key */
 export function tempDecryption(block: Uint8Array, key: Uint8Array): Uint8Array {
-    block = shiftRight128(block)
+    const block_temp = new Uint8Array(block.length)
+    block_temp.set(block)
+    shiftRight128(block_temp)
     for (let i = 0; i < block.length; i++) {
-        block[i] = block[i] ^ key[i]
+        block_temp[i] = block_temp[i] ^ key[i]
     }
-    return block
+    return block_temp
 }
 
 /* Converts a Uint8Array to a binary string or a regular string */
