@@ -1,17 +1,10 @@
 /* Convert String to Uint8Array*/
 export function stringTo128BitUint8Array(str: string): Uint8Array {
+    str = checkAndModifyPlaintext(str)
     const encoder = new TextEncoder();
     const bytes = encoder.encode(str);
     
-    // Calculate the number of 16-byte (128-bit) elements needed
-    const numElements = Math.ceil(bytes.length / 16);
-    
-    // Create a Uint8Array with the required length
-    const uint8Array = new Uint8Array(numElements * 16);
-
-    uint8Array.set(bytes);
-    
-    return uint8Array;
+    return bytes
 }
 
 /* Convert Binary String to Uint8Array */
@@ -71,7 +64,7 @@ export function shiftRight128(bits128: Uint8Array): void{
     bits128[0] |= carry << 7; // Add the captured carry bit to the rightmost bit of the leftmost byte
 }
 
-/* XOR Operation 1 block */
+/* XOR Operation 128-bit block */
 export function xor(block: Uint8Array, element: Uint8Array) {
     const block_temp = new Uint8Array(block.length)
     block_temp.set(block)
@@ -108,11 +101,20 @@ export function uint8ArrayToBinaryOrString(uint8Array: Uint8Array, isBinaryStrin
     if (isBinaryString) {
         return uint8Array.reduce((acc, byte) => acc + byte.toString(2).padStart(8, '0'), '');
     } else {
-        console.log(uint8Array)
-        console.log(Array.from(uint8Array))
         return String.fromCharCode.apply(null, Array.from(uint8Array));
     }
 }
 
+/* Increment the Counter */
+export function incrementCounter(counter: Uint8Array): void {
+    for (let i = counter.length - 1; i >= 0; i--) {
+        if (counter[i] === 255) { // If maximum value
+            counter[i] = 0; // Reset byte to 0
+        } else {
+            counter[i]++;
+            break; 
+        }
+    }
+}
 
 
