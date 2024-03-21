@@ -9,6 +9,7 @@ export function stringTo128BitUint8Array(str: string): Uint8Array {
 
 /* Convert Binary String to Uint8Array */
 export function binaryStringToUint8Array(binaryString: string) {
+    binaryString = checkAndModifyBinaryString(binaryString)
     const numElements = Math.ceil(binaryString.length / 8);
     const uint8Array = new Uint8Array(numElements);
     for (let i = 0; i < numElements; i++) {
@@ -27,6 +28,18 @@ export function checkAndModifyPlaintext(plaintext: string): string {
         }
     }
     return endPlaintext
+}
+
+/* Pads the binary string to be a multiple of 16 bytes (128 bits each block) */
+export function checkAndModifyBinaryString(binaryString: string): string {
+    var endBinaryString = binaryString
+    if (binaryString.length % 128 != 0) {
+        // pad the binary string
+        for (let i = binaryString.length; i % 128 != 0; i++) {
+            endBinaryString += "0"
+        }
+    }
+    return endBinaryString
 }
 
 /* Repeats or truncates the key to 16 bytes (128 bits each block) */

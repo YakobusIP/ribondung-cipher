@@ -1,7 +1,7 @@
 
 import * as utils from './blockmaniputils';
 
-export function ecb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array): Uint8Array {
+function ecb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array): Uint8Array {
     const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
     const blocks = new Uint8Array(Math.ceil(uint8bytes.length / blockSize) * blockSize);
 
@@ -10,11 +10,10 @@ export function ecb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecryp
         const encryptedBlock = encryptdecrypt(block, key_bytes); // Assuming encryptdecrypt is defined elsewhere
         blocks.set(encryptedBlock, i);
     }
-
     return blocks;
 }
 
-export function cbc(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, decrypt = false): Uint8Array {
+function cbc(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, decrypt = false): Uint8Array {
     const random="THISISASECRETOKA"
     const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
     const blocks = new Uint8Array(Math.ceil(uint8bytes.length / blockSize) * blockSize);
@@ -38,8 +37,7 @@ export function cbc(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecryp
     return blocks
 }
 
-
-export function cfb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, decrypt = false): Uint8Array {
+function cfb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, decrypt = false): Uint8Array {
     const random="THISISASECRETOKA"
     const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
     const blocks = new Uint8Array(Math.ceil(uint8bytes.length / blockSize) * blockSize);
@@ -61,7 +59,7 @@ export function cfb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecryp
     return blocks
 }
 
-export function ofb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array): Uint8Array {
+function ofb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array): Uint8Array {
     const random="THISISASECRETOKA"
     const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
     const blocks = new Uint8Array(Math.ceil(uint8bytes.length / blockSize) * blockSize);
@@ -94,16 +92,43 @@ function counter(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: 
     return blocks;
 }
 
-// example use of ecb, cbc
 
-/*
-var plaintext="lets see if this is correct okay?"
-plaintext = utils.checkAndModifyPlaintext(plaintext)
-var key="THIS IS THE KEY"
-key = utils.checkAndModifyKey(key)
+export function executeMode(mode: string, text: string, key: string, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, fromBinary = false, toBinary = false, decrypt = false): string {
+    var text_bytes: Uint8Array
+    var result_bytes: Uint8Array
+    if (fromBinary) {
+        text_bytes = utils.binaryStringToUint8Array(text)
+    } else {
+        text_bytes = utils.stringTo128BitUint8Array(text)
+    }
+    const key_bytes = utils.stringTo128BitUint8Array(utils.checkAndModifyKey(key))
 
-var bytes = utils.stringTo128BitUint8Array(plaintext)
-var key_in_bytes = utils.stringTo128BitUint8Array(key)
+    switch (mode) {
+        case "ECB":
+            result_bytes = ecb(text_bytes, key_bytes, encryptdecrypt)
+            break;
+        case "CBC":
+            result_bytes = cbc(text_bytes, key_bytes, encryptdecrypt, decrypt)
+            break;
+        case "CFB":
+            result_bytes = cfb(text_bytes, key_bytes, encryptdecrypt, decrypt)
+            break;
+        case "OFB":
+            result_bytes = ofb(text_bytes, key_bytes, encryptdecrypt)
+            break;
+        case "counter":
+            result_bytes = counter(text_bytes, key_bytes, encryptdecrypt)
+            break;
+        default:
+            return "Invalid mode"
+    }
+    if (toBinary) {
+        return utils.uint8ArrayToBinaryOrString(result_bytes, true)
+    } else {
+        return utils.uint8ArrayToBinaryOrString(result_bytes, false)
+    }
+}
+
 
 const encrypt = (bits128: Uint8Array, key: Uint8Array) => {
     return utils.tempEncryption(bits128, key)
@@ -113,20 +138,22 @@ const decrypt = (bits128: Uint8Array, key: Uint8Array) => {
     return utils.tempDecryption(bits128, key)
 }
 
-var ciphertext = ecb(bytes, key_in_bytes, encrypt)
-var ciphertext = cbc(bytes, key_in_bytes, encrypt, false)
-var ciphertext = cfb(bytes, key_in_bytes, encrypt, false)
-var ciphertext = ofb(bytes, key_in_bytes, encrypt)
-var ciphertext = counter(bytes, key_in_bytes, encrypt)
+var plaintext="This is correct rigth? hopefylly it's rightt"
+var key="THIS IS THE KEY"
 
-var ciphertext_bin_string = utils.uint8ArrayToBinaryOrString(ciphertext, true)
-const bytes_d = utils.binaryStringToUint8Array(ciphertext_bin_string) 
+// var ciphertext = executeMode("ECB", plaintext, key, encrypt, false, true, false)
+// var plaintextd = executeMode("ECB", ciphertext, key, decrypt, true, false, true)
 
-var plaintextd = ecb(bytes_d, key_in_bytes, decrypt)
-var plaintextd = cbc(bytes_d, key_in_bytes, decrypt, true)
-var plaintextd = cfb(bytes_d, key_in_bytes, encrypt, true)
-var plaintextd = ofb(bytes_d, key_in_bytes, encrypt)
-var plaintextd = counter(bytes_d, key_in_bytes, encrypt)
+// var ciphertext = executeMode("CBC", plaintext, key, encrypt, false, true, false)
+// var plaintextd = executeMode("CBC", ciphertext, key, decrypt, true, false, true)
 
-console.log(utils.uint8ArrayToBinaryOrString(plaintextd, false))
-*/
+// var ciphertext = executeMode("CFB", plaintext, key, encrypt, false, true, false)
+// var plaintextd = executeMode("CFB", ciphertext, key, encrypt, true, false, true)
+
+// var ciphertext = executeMode("OFB", plaintext, key, encrypt, false, true, false)
+// var plaintextd = executeMode("OFB", ciphertext, key, encrypt, true, false, true)
+
+var ciphertext = executeMode("counter", plaintext, key, encrypt, false, true, false)
+var plaintextd = executeMode("counter", ciphertext, key, encrypt, true, false, true)
+console.log(ciphertext)
+console.log(plaintextd)
