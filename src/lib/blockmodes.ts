@@ -158,14 +158,13 @@ export function executeModeFile(mode: string, file: File, key: string, encryptde
                     reject("Invalid mode");
                     return;
             }
-            // result bytes to file
-            console.log(file.name.split("."))
+            
             const filename = file.name.split(".")
             if (decrypt) {
-                const resultFile = new File([result_bytes], `${filename[0]}_decrypted_${mode}.${filename[1]||'file'}`, { type: file.type });
+                const resultFile = new File([result_bytes], `${filename[0]}_decrypted_${mode}.${filename[1]||file.type}`, { type: file.type });
                 resolve(resultFile);
             } else {
-                const resultFile = new File([result_bytes], `${filename[0]}_encrypted_${mode}.${filename[1]||'file'}`, { type: file.type });
+                const resultFile = new File([result_bytes], `${filename[0]}_encrypted_${mode}.${filename[1]||file.type}`, { type: file.type });
                 resolve(resultFile);
             }
 
