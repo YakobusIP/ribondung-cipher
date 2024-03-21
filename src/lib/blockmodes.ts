@@ -1,5 +1,6 @@
 
 import * as utils from './blockmaniputils';
+import { fileToUint8Array } from './utils';
 
 function ecb(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array): Uint8Array {
     const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
@@ -104,19 +105,19 @@ export function executeMode(mode: string, text: string, key: string, encryptdecr
     const key_bytes = utils.stringTo128BitUint8Array(utils.checkAndModifyKey(key))
 
     switch (mode) {
-        case "ECB":
+        case "ecb":
             result_bytes = ecb(text_bytes, key_bytes, encryptdecrypt)
             break;
-        case "CBC":
+        case "cbc":
             result_bytes = cbc(text_bytes, key_bytes, encryptdecrypt, decrypt)
             break;
-        case "CFB":
+        case "cfb":
             result_bytes = cfb(text_bytes, key_bytes, encryptdecrypt, decrypt)
             break;
-        case "OFB":
+        case "ofb":
             result_bytes = ofb(text_bytes, key_bytes, encryptdecrypt)
             break;
-        case "counter":
+        case "ctr":
             result_bytes = counter(text_bytes, key_bytes, encryptdecrypt)
             break;
         default:
@@ -129,31 +130,45 @@ export function executeMode(mode: string, text: string, key: string, encryptdecr
     }
 }
 
+export function executeModeFile(mode: string, file: File, key: string, encryptdecrypt: (bits128: Uint8Array, key: Uint8Array) => Uint8Array, decrypt = false): Promise<File> {
+    return new Promise((resolve, reject) => {
+        fileToUint8Array(file, (uint8Array) => {
+            const text_bytes = utils.checkAndModifyBinary(uint8Array);
+            const key_bytes = utils.stringTo128BitUint8Array(utils.checkAndModifyKey(key));
 
-const encrypt = (bits128: Uint8Array, key: Uint8Array) => {
-    return utils.tempEncryption(bits128, key)
+            let result_bytes: Uint8Array;
+
+            switch (mode) {
+                case "ecb":
+                    result_bytes = ecb(text_bytes, key_bytes, encryptdecrypt);
+                    break;
+                case "cbc":
+                    result_bytes = cbc(text_bytes, key_bytes, encryptdecrypt, decrypt);
+                    break;
+                case "cfb":
+                    result_bytes = cfb(text_bytes, key_bytes, encryptdecrypt, decrypt);
+                    break;
+                case "ofb":
+                    result_bytes = ofb(text_bytes, key_bytes, encryptdecrypt);
+                    break;
+                case "ctr":
+                    result_bytes = counter(text_bytes, key_bytes, encryptdecrypt);
+                    break;
+                default:
+                    reject("Invalid mode");
+                    return;
+            }
+            // result bytes to file
+            console.log(file.name.split("."))
+            const filename = file.name.split(".")
+            if (decrypt) {
+                const resultFile = new File([result_bytes], `${filename[0]}_decrypted_${mode}.${filename[1]||'file'}`, { type: file.type });
+                resolve(resultFile);
+            } else {
+                const resultFile = new File([result_bytes], `${filename[0]}_encrypted_${mode}.${filename[1]||'file'}`, { type: file.type });
+                resolve(resultFile);
+            }
+
+        });
+    });
 }
-
-const decrypt = (bits128: Uint8Array, key: Uint8Array) => {
-    return utils.tempDecryption(bits128, key)
-}
-
-var plaintext="This is correct rigth? hopefylly it's rightt"
-var key="THIS IS THE KEY"
-
-// var ciphertext = executeMode("ECB", plaintext, key, encrypt, false, true, false)
-// var plaintextd = executeMode("ECB", ciphertext, key, decrypt, true, false, true)
-
-// var ciphertext = executeMode("CBC", plaintext, key, encrypt, false, true, false)
-// var plaintextd = executeMode("CBC", ciphertext, key, decrypt, true, false, true)
-
-// var ciphertext = executeMode("CFB", plaintext, key, encrypt, false, true, false)
-// var plaintextd = executeMode("CFB", ciphertext, key, encrypt, true, false, true)
-
-// var ciphertext = executeMode("OFB", plaintext, key, encrypt, false, true, false)
-// var plaintextd = executeMode("OFB", ciphertext, key, encrypt, true, false, true)
-
-var ciphertext = executeMode("counter", plaintext, key, encrypt, false, true, false)
-var plaintextd = executeMode("counter", ciphertext, key, encrypt, true, false, true)
-console.log(ciphertext)
-console.log(plaintextd)

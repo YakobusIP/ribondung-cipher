@@ -28,6 +28,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "./components/ui/button";
 import { ChangeEvent, useState } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
+import { executeMode, executeModeFile } from "./lib/blockmodes";
+import { tempDecryption, tempEncryption } from "./lib/blockmaniputils";
+import { downloadFile } from "./lib/utils";
 
 function App() {
   const [inputType, setInputType] = useState("text");
@@ -35,6 +38,9 @@ function App() {
   const [inputFile, setInputFile] = useState<File | null>(null);
   const [mode, setMode] = useState("ecb");
   const [key, setKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [result, setResult] = useState("");
+  const [placeholder, setPlaceholder] = useState("Result will be shown here...");
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -43,6 +49,7 @@ function App() {
   };
 
   const isDisabled = () => {
+    if (isLoading) return true;
     if (inputType === "text") {
       return inputText.length === 0 || mode.length === 0 || key.length === 0;
     } else if (inputType === "file") {
@@ -52,9 +59,42 @@ function App() {
     }
   };
 
-  const encrypt = () => {};
+  const encrypt = () => {
+    setIsLoading(true);
+    if (inputType === "text") {
+      const result = executeMode(mode, inputText, key, tempEncryption, false, true, false);
+      setResult(result);
+      setIsLoading(false);
+    } else if (inputType === "file") {
+      if (!inputFile) return;
+      executeModeFile(mode, inputFile, key, tempEncryption, false).then((result) => {
+        downloadFile(result);
+        setPlaceholder("Encrypted file downloaded...")
+        setIsLoading(false);
+      });
+    }
+  };
 
-  const decrypt = () => {};
+  const decrypt = () => {
+    setIsLoading(true);
+    if (inputType === "text") {
+      if (mode === "ecb" || mode === "cbc") {
+        const result = executeMode(mode, inputText, key, tempDecryption, true, false, true);
+        setResult(result);
+      } else {
+        const result = executeMode(mode, inputText, key, tempEncryption, true, false, true);
+        setResult(result);
+      }
+      setIsLoading(false);
+    } else if (inputType === "file") {
+      if (!inputFile) return;
+      executeModeFile(mode, inputFile, key, tempDecryption, true).then((result) => {
+        downloadFile(result);
+        setPlaceholder("Decrypted file downloaded...")
+        setIsLoading(false);
+      });
+    }
+  };
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
@@ -184,19 +224,26 @@ function App() {
               </form>
             </CardContent>
             <CardFooter>
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-col w-full gap-4">
                 <div className="flex gap-4">
-                  <Button variant="outline" disabled={isDisabled()}>
+                  <Button onClick={encrypt} variant="outline" disabled={isDisabled()}>
                     <LockKeyhole className="mr-2 h-4 w-4" />
                     Encrypt
                   </Button>
-                  <Button variant="outline" disabled={isDisabled()}>
+                  <Button onClick={decrypt} variant="outline" disabled={isDisabled()}>
                     <LockKeyholeOpen className="mr-2 h-4 w-4" />
                     Decrypt
                   </Button>
                 </div>
                 <div>
                   <Label>Result</Label>
+                  <Textarea
+                    className="w-full"
+                    rows={5}
+                    placeholder={placeholder}
+                    value={result}
+                    readOnly
+                  />
                 </div>
               </div>
             </CardFooter>

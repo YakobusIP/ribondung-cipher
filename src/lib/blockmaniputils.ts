@@ -42,6 +42,16 @@ export function checkAndModifyBinaryString(binaryString: string): string {
     return endBinaryString
 }
 
+export function checkAndModifyBinary(binary: Uint8Array) {
+    var endBinary = binary
+    if (binary.length % 16 != 0) {
+        // pad the binary
+        endBinary = new Uint8Array(Math.ceil(binary.length / 16) * 16);
+        endBinary.set(binary)
+    }
+    return endBinary
+}
+
 /* Repeats or truncates the key to 16 bytes (128 bits each block) */
 export function checkAndModifyKey(key: string) {
     var endKey = key
