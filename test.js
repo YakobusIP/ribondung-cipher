@@ -373,7 +373,7 @@ const substitution1 = (bit) => {
 
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution2 = (bit) => {
@@ -399,7 +399,7 @@ const substitution2 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution3 = (bit) => {
@@ -425,7 +425,7 @@ const substitution3 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution4 = (bit) => {
@@ -451,7 +451,7 @@ const substitution4 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution5 = (bit) => {
@@ -477,7 +477,7 @@ const substitution5 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution6 = (bit) => {
@@ -503,7 +503,7 @@ const substitution6 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution7 = (bit) => {
@@ -529,7 +529,7 @@ const substitution7 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitution8 = (bit) => {
@@ -555,7 +555,7 @@ const substitution8 = (bit) => {
   
   const substitutedResult = sbox[row][col]
 
-  return substitutedResult.toString(2)
+  return substitutedResult.toString(2).padStart(4, '0')
 }
 
 const substitutionHashFunc = {
@@ -608,40 +608,72 @@ const feistelV2 = (plaintextA, plaintextB, plaintextC, plaintextD, key) => {
   return [new Uint8Array(productOfXorDCB), new Uint8Array(productOfXorDC), new Uint8Array(plaintextD), new Uint8Array(productOfXorDCBA)]
 }
 
+const splitPlaintextTo128Bit = (plaintext) => {
+  const splittedPlaintext = []
+
+  for (let i = 0; i < plaintext.length; i += 16) {
+    splittedPlaintext.push(plaintext.slice(i, i + 16))
+  }
+  return splittedPlaintext
+}
 
 const encryptV2 = (plaintext, key, iter) => {
   const checkedKey = checkAndModifyKey(key)
   const checkedPlaintext = checkAndModifyPlaintext(plaintext)
 
-  
+  const splitPlaintext = splitPlaintextTo128Bit(checkedPlaintext)
+
   let byteKey = stringToByte(checkedKey)
-  let plaintextByte = stringToByte(checkedPlaintext)
-
-  const splittedPlaintext = splitBytesIntoBlock(plaintextByte, plaintextByte.length / 4)
-  let plaintextA = splittedPlaintext[0]
-  let plaintextB = splittedPlaintext[1]
-  let plaintextC = splittedPlaintext[2]
-  let plaintextD = splittedPlaintext[3]
-
-  const splittedKey = splitBytesIntoBlock(byteKey, byteKey.length / 2)
-
-  const bitLeft = bytesToBit(splittedKey[0]).join('')
-  const bitRight = bytesToBit(splittedKey[1]).join('')
-
-  // feistel
-  for (let i = 0; i < iter; i++) {
-    byteKey = roundKeyV2(bitLeft, bitRight, iter)
+  
+  const encryptionResults = []
+  for (let i = 0; i < splitPlaintext.length; i++) {
+    let plaintextByte = stringToByte(splitPlaintext[i])
+    
+    const splittedPlaintext = splitBytesIntoBlock(plaintextByte, plaintextByte.length / 4)
+    let plaintextA = splittedPlaintext[0]
+    let plaintextB = splittedPlaintext[1]
+    let plaintextC = splittedPlaintext[2]
+    let plaintextD = splittedPlaintext[3]
+  
+    const splittedKey = splitBytesIntoBlock(byteKey, byteKey.length / 2)
+  
+    const bitLeft = bytesToBit(splittedKey[0]).join('')
+    const bitRight = bytesToBit(splittedKey[1]).join('')
+  
     // feistel
-    const feistelResult = feistelV2(plaintextA, plaintextB, plaintextC, plaintextD, byteKey)
-    plaintextA = feistelResult[0]
-    plaintextB = feistelResult[1]
-    plaintextC = feistelResult[2]
-    plaintextD = feistelResult[3]
+    for (let i = 0; i < iter; i++) {
+      byteKey = roundKeyV2(bitLeft, bitRight, iter)
+      // feistel
+      const feistelResult = feistelV2(plaintextA, plaintextB, plaintextC, plaintextD, byteKey)
+      plaintextA = feistelResult[0]
+      plaintextB = feistelResult[1]
+      plaintextC = feistelResult[2]
+      plaintextD = feistelResult[3]
+    }
+  
+    const encryptionResult = new Uint8Array([...plaintextA, ...plaintextB, ...plaintextC, ...plaintextD])
+  
+    encryptionResults.push(encryptionResult)
   }
 
-  const encryptionResult = new Uint8Array([...plaintextA, ...plaintextB, ...plaintextC, ...plaintextD])
+  // Get the total length of all arrays.
+  let length = 0;
+  encryptionResults.forEach(item => {
+    length += item.length;
+  });
 
-  return encryptionResult
+  // Create a new array with total length and merge all source arrays.
+  let mergedArray = new Uint8Array(length);
+  let offset = 0;
+  encryptionResults.forEach(item => {
+    mergedArray.set(item, offset);
+    offset += item.length;
+  });
+
+  return mergedArray
 }
 
-console.log(encryptV2('this is a plaintext', 'hello world', 16))
+const encryptionResult = encryptV2('this is a plaintext, i want to test this encryption result', 'hello world', 16)
+
+console.log(encryptionResult)
+console.log(byteToString(encryptionResult))
