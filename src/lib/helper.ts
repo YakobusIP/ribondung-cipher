@@ -41,11 +41,13 @@ export const bytesToBit = (bytes: Uint8Array) => {
   for (const byte of bytes) {
     binaryString += byte.toString(2).padStart(8, "0") + " ";
   }
-  return binaryString.trim();
+  binaryString = binaryString.trim();
+  const binaryArray = binaryString.split(' ')
+  return binaryArray
 }
 
-export const bitToBytes = (bit: string) => {
-  const bitString = bit.replace(/\s+/g, "")
+export const bitToBytes = (bit: string[]) => {
+  const bitString = bit.join('')
   const byteArr = [];
   for (let i = 0; i < bitString.length; i += 8) {
     const byteString = bitString.slice(i, i + 8);
