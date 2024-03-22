@@ -1,4 +1,4 @@
-import { byteToHex } from "./helper"
+import { byteToHex, stringToByte } from "./helper"
 
 const SBoxSubstitution = (block: Uint8Array) => {
   const sbox = [
@@ -167,4 +167,10 @@ const reverseSBoxSubstitution = () => {
   ]
 
   return sbox_inverse
+}
+
+const roundKey = (key: string) => {
+  const byteKey = stringToByte(key)
+
+  
 }
