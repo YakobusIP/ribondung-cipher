@@ -59,12 +59,13 @@ function App() {
     }
   };
 
-  const encryptClicked = () => {
+  const encryptClicked = async () => {
     setIsLoading(true);
     if (inputType === "text") {
-      const result = executeMode(mode, inputText, key, encrypt, false, true, false);
-      setResult(result);
-      setIsLoading(false);
+      executeMode(mode, inputText, key, encrypt, false, true, false).then((result) => {
+        setResult(result);
+        setIsLoading(false);
+      });
     } else if (inputType === "file") {
       if (!inputFile) return;
       executeModeFile(mode, inputFile, key, encrypt, false).then((result) => {
@@ -75,17 +76,20 @@ function App() {
     }
   };
 
-  const decryptClicked= () => {
+  const decryptClicked= async () => {
     setIsLoading(true);
     if (inputType === "text") {
       if (mode === "ecb" || mode === "cbc") {
-        const result = executeMode(mode, inputText, key, decrypt, true, false, true);
-        setResult(result);
+        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
+          setResult(result);
+          setIsLoading(false);
+        });
       } else {
-        const result = executeMode(mode, inputText, key, decrypt, true, false, true);
-        setResult(result);
+        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
+          setResult(result);
+          setIsLoading(false);
+        });
       }
-      setIsLoading(false);
     } else if (inputType === "file") {
       if (!inputFile) return;
       executeModeFile(mode, inputFile, key, decrypt, true).then((result) => {

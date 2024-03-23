@@ -94,7 +94,7 @@ function counter(uint8bytes: Uint8Array, key_bytes: Uint8Array, encryptdecrypt: 
 }
 
 
-export function executeMode(mode: string, text: string, key: string, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, fromBinary = false, toBinary = false, decrypt = false): string {
+export async function executeMode(mode: string, text: string, key: string, encryptdecrypt: (bits128: Uint8Array, key:Uint8Array) => Uint8Array, fromBinary = false, toBinary = false, decrypt = false): Promise<string> {
     var text_bytes: Uint8Array
     var result_bytes: Uint8Array
     if (fromBinary) {
@@ -124,13 +124,13 @@ export function executeMode(mode: string, text: string, key: string, encryptdecr
             return "Invalid mode"
     }
     if (toBinary) {
-        return utils.uint8ArrayToBinaryOrString(result_bytes, true)
+        return Promise.resolve(utils.uint8ArrayToBinaryOrString(result_bytes, true))
     } else {
-        return utils.uint8ArrayToBinaryOrString(result_bytes, false)
+        return Promise.resolve(utils.uint8ArrayToBinaryOrString(result_bytes, false))
     }
 }
 
-export function executeModeFile(mode: string, file: File, key: string, encryptdecrypt: (bits128: Uint8Array, key: Uint8Array) => Uint8Array, decrypt = false): Promise<File> {
+export async function executeModeFile(mode: string, file: File, key: string, encryptdecrypt: (bits128: Uint8Array, key: Uint8Array) => Uint8Array, decrypt = false): Promise<File> {
     return new Promise((resolve, reject) => {
         fileToUint8Array(file, (uint8Array) => {
             const text_bytes = utils.checkAndModifyBinary(uint8Array);
@@ -167,7 +167,6 @@ export function executeModeFile(mode: string, file: File, key: string, encryptde
                 const resultFile = new File([result_bytes], `${filename[0]}_encrypted_${mode}.${filename[1]||file.type}`, { type: file.type });
                 resolve(resultFile);
             }
-
         });
     });
 }
