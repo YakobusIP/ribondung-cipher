@@ -59,15 +59,19 @@ function App() {
   const encryptClicked = async () => {
     setIsLoading(true);
     if (inputType === "text") {
-      executeMode(mode, inputText, key, encrypt, false, true, false).then((result) => {
+      executeMode(mode, inputText, key, false, true, false).then((result) => {
         setResult(result);
+      })
+      .finally(() => {
         setIsLoading(false);
       });
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, encrypt, false).then((result) => {
+      executeModeFile(mode, inputFile, key, false).then((result) => {
         downloadFile(result);
-        setPlaceholder("Encrypted file downloaded...")
+        setPlaceholder("Encrypted file downloaded...");
+      })
+      .finally(() => {
         setIsLoading(false);
       });
     }
@@ -77,21 +81,27 @@ function App() {
     setIsLoading(true);
     if (inputType === "text") {
       if (mode === "ecb" || mode === "cbc") {
-        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
+        executeMode(mode, inputText, key, true, false, true).then((result) => {
           setResult(result);
+        })
+        .finally(() => {
           setIsLoading(false);
         });
       } else {
-        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
+        executeMode(mode, inputText, key, true, false, true).then((result) => {
           setResult(result);
+        })
+        .finally(() => {
           setIsLoading(false);
         });
       }
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, decrypt, true).then((result) => {
+      executeModeFile(mode, inputFile, key, true).then((result) => {
         downloadFile(result);
-        setPlaceholder("Decrypted file downloaded...")
+        setPlaceholder("Decrypted file downloaded...");
+      })
+      .finally(() => {
         setIsLoading(false);
       });
     }

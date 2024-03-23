@@ -602,7 +602,7 @@ const decryptFeistel = (
 };
 
 // const encrypt = (plaintext: string, key: string, rounds: number) => {
-export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Uint8Array => {
+export const encrypt =async (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Promise<Uint8Array> => {
   // // Check the key length
   // const checkedKey = checkAndModifyKey(key);
 
@@ -685,7 +685,7 @@ export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Ui
 };
 
 // const decrypt = (ciphertext: string, key: string, rounds: number) => {
-export const decrypt = (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) :Uint8Array=> {
+export const decrypt = async (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) : Promise<Uint8Array>=> {
   // const checkedKey = checkAndModifyKey(key);
   // const splitCiphertext = splitPlaintextTo128Bit(ciphertext);
 
