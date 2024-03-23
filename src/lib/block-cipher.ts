@@ -1,8 +1,5 @@
 import {
   byteToHex,
-  stringToByte,
-  byteToString,
-  padBytes,
   splitBytesIntoBlock,
   bytesToBit,
   bitToBytes,
@@ -11,14 +8,9 @@ import {
   shiftRight128ByOne,
   shiftLeft128ByTwo,
   shiftRight128ByTwo,
-  expansionPermutation,
-  splitPlaintextTo128Bit
+  expansionPermutation
 } from "./helper";
-import {
-  xor,
-  checkAndModifyKey,
-  checkAndModifyPlaintext
-} from "./blockmaniputils";
+import { xor } from "./blockmaniputils";
 
 const SBoxSubstitution = (block: Uint8Array) => {
   const sbox = [
@@ -171,10 +163,6 @@ const reverseSBoxSubstitution = () => {
   ];
 
   return sbox_inverse;
-};
-
-const roundKey = (key: string) => {
-  const byteKey = stringToByte(key);
 };
 
 const straightPermutationLeft = (bit: string) => {
@@ -613,42 +601,43 @@ const decryptFeistel = (
   ];
 };
 
-const encrypt = (plaintext: string, key: string, rounds: number) => {
-  // Check the key length
-  const checkedKey = checkAndModifyKey(key);
+// const encrypt = (plaintext: string, key: string, rounds: number) => {
+export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16) => {
+  // // Check the key length
+  // const checkedKey = checkAndModifyKey(key);
 
-  // Check the plaintext and pad if needed
-  const checkedPlaintext = checkAndModifyPlaintext(plaintext);
-
-  console.log(stringToByte(checkedPlaintext), "original");
+  // // Check the plaintext and pad if needed
+  // const checkedPlaintext = checkAndModifyPlaintext(plaintext);
 
   // Split the plaintext per 128-bit (16 bytes) block each
-  const splitPlaintext = splitPlaintextTo128Bit(checkedPlaintext);
+  // const splitPlaintext = splitPlaintextTo128Bit(plaintext);
+
+  const splitBlocks = splitBytesIntoBlock(plaintext, 16);
 
   // Generate key
-  const byteKey = stringToByte(checkedKey);
-  const splittedKey = splitBytesIntoBlock(byteKey, byteKey.length / 2);
-  const roundKeys = [];
+  // const byteKey = stringToByte(checkedKey);
+  const splittedKey = splitBytesIntoBlock(key, key.length / 2);
+  const roundKeys: Array<Uint8Array> = [];
 
   let bitLeft = bytesToBit(splittedKey[0]).join("");
   let bitRight = bytesToBit(splittedKey[1]).join("");
 
   for (let i = 0; i < rounds; i++) {
     const roundKeyOutput = generateRoundKey(bitLeft, bitRight, i);
-    bitLeft = roundKeyOutput[0];
-    bitRight = roundKeyOutput[1];
-    const roundByteKey = roundKeyOutput[2];
+    bitLeft = roundKeyOutput[0].join("");
+    bitRight = roundKeyOutput[1].join("");
+    const roundByteKey = roundKeyOutput[2] as Uint8Array;
     roundKeys.push(roundByteKey);
   }
 
   const encryptedResults = [];
 
   // Iterate each 16 bytes of plaintext block
-  for (const block of splitPlaintext) {
-    const blockBytes = stringToByte(block);
+  for (const block of splitBlocks) {
+    // const blockBytes = stringToByte(block);
 
     // Hard code each split to 4 bytes each (32-bit)
-    const splittedPlaintext = splitBytesIntoBlock(blockBytes, 4);
+    const splittedPlaintext = splitBytesIntoBlock(block, 4);
     let plainTextA = splittedPlaintext[0];
     let plainTextB = splittedPlaintext[1];
     let plainTextC = splittedPlaintext[2];
@@ -695,14 +684,17 @@ const encrypt = (plaintext: string, key: string, rounds: number) => {
   return mergedArray;
 };
 
-const decrypt = (ciphertext: string, key: string, rounds: number) => {
-  const checkedKey = checkAndModifyKey(key);
-  const splitCiphertext = splitPlaintextTo128Bit(ciphertext);
+// const decrypt = (ciphertext: string, key: string, rounds: number) => {
+export const decrypt = (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) => {
+  // const checkedKey = checkAndModifyKey(key);
+  // const splitCiphertext = splitPlaintextTo128Bit(ciphertext);
 
-  const byteKey = stringToByte(checkedKey);
-  const roundKeys = []; // Store all round keys
+  // const byteKey = stringToByte(checkedKey);
+  const roundKeys: Array<Uint8Array> = []; // Store all round keys
 
-  const splittedKey = splitBytesIntoBlock(byteKey, byteKey.length / 2);
+  const splittedKey = splitBytesIntoBlock(key, key.length / 2);
+
+  const splitBlocks = splitBytesIntoBlock(ciphertext, 16);
 
   let bitLeft = bytesToBit(splittedKey[0]).join("");
   let bitRight = bytesToBit(splittedKey[1]).join("");
@@ -710,14 +702,16 @@ const decrypt = (ciphertext: string, key: string, rounds: number) => {
   // Generate all round keys first
   for (let i = 0; i < rounds; i++) {
     const roundKeyOutput = generateRoundKey(bitLeft, bitRight, i);
-    bitLeft = roundKeyOutput[0];
-    bitRight = roundKeyOutput[1];
-    const roundByteKey = roundKeyOutput[2];
+    bitLeft = roundKeyOutput[0].join("");
+    bitRight = roundKeyOutput[1].join("");
+    const roundByteKey = roundKeyOutput[2] as Uint8Array;
     roundKeys.push(roundByteKey);
   }
 
   const decryptionResults = [];
-  for (const block of splitCiphertext) {
+  for (const block of splitBlocks) {
+    // const blockBytes = stringToByte(block);
+
     const splittedCipherText = splitBytesIntoBlock(block, 4);
     let cipherTextA = splittedCipherText[0];
     let cipherTextB = splittedCipherText[1];

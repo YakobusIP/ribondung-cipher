@@ -890,8 +890,8 @@ const encrypt = (plaintext, key, rounds) => {
 
   for (let i = 0; i < rounds; i++) {
     const roundKeyOutput = roundKeyV2(bitLeft, bitRight, i);
-    bitLeft = roundKeyOutput[0];
-    bitRight = roundKeyOutput[1];
+    bitLeft = roundKeyOutput[0].join("");
+    bitRight = roundKeyOutput[1].join("");
     const roundByteKey = roundKeyOutput[2];
     roundKeys.push(roundByteKey);
   }
@@ -1037,8 +1037,8 @@ const decryptV2 = (ciphertext, key, rounds) => {
   // Generate all round keys first
   for (let i = 0; i < rounds; i++) {
     const roundKeyOutput = roundKeyV2(bitLeft, bitRight, i);
-    bitLeft = roundKeyOutput[0];
-    bitRight = roundKeyOutput[1];
+    bitLeft = roundKeyOutput[0].join("");
+    bitRight = roundKeyOutput[1].join("");
     const roundByteKey = roundKeyOutput[2];
     roundKeys.push(roundByteKey);
   }
@@ -1095,7 +1095,7 @@ const decryptV2 = (ciphertext, key, rounds) => {
 };
 
 const encryptionResult = encrypt(
-  "this is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizi.this is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizi.this is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizithis is a plaintext, i created the encryption. si jason ketiduran, belum makan siang, tolong diberikan asupan gizi",
+  "Hello test. this is working",
   "hello world",
   16
 );
