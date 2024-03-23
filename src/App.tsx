@@ -18,16 +18,11 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
-import { Button } from "./components/ui/button";
-import { ChangeEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
+import { RightAccordion } from "@/components/right-accordion";
+import { ChangeEvent, useState } from "react";
 import { executeMode, executeModeFile } from "./lib/blockmodes";
 import { downloadFile } from "./lib/utils";
 import { encrypt, decrypt } from "./lib/block-cipher";
@@ -40,7 +35,9 @@ function App() {
   const [key, setKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState("");
-  const [placeholder, setPlaceholder] = useState("Result will be shown here...");
+  const [placeholder, setPlaceholder] = useState(
+    "Result will be shown here..."
+  );
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -228,7 +225,7 @@ function App() {
               </form>
             </CardContent>
             <CardFooter>
-            <div className="flex flex-col w-full gap-4">
+              <div className="flex flex-col w-full gap-4">
                 <div className="flex gap-4">
                   <Button onClick={encryptClicked} variant="outline" disabled={isDisabled()}>
                     <LockKeyhole className="mr-2 h-4 w-4" />
@@ -253,26 +250,7 @@ function App() {
             </CardFooter>
           </Card>
           <div className="w-full p-4">
-            <Accordion type="single" collapsible>
-              <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  Bagaimana desain algoritma cipher ini?
-                </AccordionTrigger>
-                <AccordionContent>Work in progress</AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="how-to-use">
-                <AccordionTrigger>
-                  Bagaimana cara menggunakan kakas ini?
-                </AccordionTrigger>
-                <AccordionContent>
-                  <p>1. Pilih jenis masukan antara teks biasa atau file</p>
-                  <p>2. Masukan teks atau file</p>
-                  <p>3. Pilih mode yang diinginkan</p>
-                  <p>4. Masukan key untuk melakukan enkripsi atau dekripsi</p>
-                  <p>5. Tekan tombol encrypt atau decrypt untuk memulai</p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            <RightAccordion />
           </div>
         </div>
       </main>
