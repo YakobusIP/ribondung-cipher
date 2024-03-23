@@ -602,7 +602,7 @@ const decryptFeistel = (
 };
 
 // const encrypt = (plaintext: string, key: string, rounds: number) => {
-export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16) => {
+export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Uint8Array => {
   // // Check the key length
   // const checkedKey = checkAndModifyKey(key);
 
@@ -685,7 +685,7 @@ export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16) => 
 };
 
 // const decrypt = (ciphertext: string, key: string, rounds: number) => {
-export const decrypt = (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) => {
+export const decrypt = (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) :Uint8Array=> {
   // const checkedKey = checkAndModifyKey(key);
   // const splitCiphertext = splitPlaintextTo128Bit(ciphertext);
 

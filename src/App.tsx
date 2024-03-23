@@ -29,8 +29,8 @@ import { Button } from "./components/ui/button";
 import { ChangeEvent, useState } from "react";
 import { ModeToggle } from "@/components/mode-toggle";
 import { executeMode, executeModeFile } from "./lib/blockmodes";
-import { tempDecryption, tempEncryption } from "./lib/blockmaniputils";
 import { downloadFile } from "./lib/utils";
+import { encrypt, decrypt } from "./lib/block-cipher";
 
 function App() {
   const [inputType, setInputType] = useState("text");
@@ -59,15 +59,15 @@ function App() {
     }
   };
 
-  const encrypt = () => {
+  const encryptClicked = () => {
     setIsLoading(true);
     if (inputType === "text") {
-      const result = executeMode(mode, inputText, key, tempEncryption, false, true, false);
+      const result = executeMode(mode, inputText, key, encrypt, false, true, false);
       setResult(result);
       setIsLoading(false);
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, tempEncryption, false).then((result) => {
+      executeModeFile(mode, inputFile, key, encrypt, false).then((result) => {
         downloadFile(result);
         setPlaceholder("Encrypted file downloaded...")
         setIsLoading(false);
@@ -75,20 +75,20 @@ function App() {
     }
   };
 
-  const decrypt = () => {
+  const decryptClicked= () => {
     setIsLoading(true);
     if (inputType === "text") {
       if (mode === "ecb" || mode === "cbc") {
-        const result = executeMode(mode, inputText, key, tempDecryption, true, false, true);
+        const result = executeMode(mode, inputText, key, decrypt, true, false, true);
         setResult(result);
       } else {
-        const result = executeMode(mode, inputText, key, tempEncryption, true, false, true);
+        const result = executeMode(mode, inputText, key, decrypt, true, false, true);
         setResult(result);
       }
       setIsLoading(false);
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, tempDecryption, true).then((result) => {
+      executeModeFile(mode, inputFile, key, decrypt, true).then((result) => {
         downloadFile(result);
         setPlaceholder("Decrypted file downloaded...")
         setIsLoading(false);
@@ -226,11 +226,11 @@ function App() {
             <CardFooter>
             <div className="flex flex-col w-full gap-4">
                 <div className="flex gap-4">
-                  <Button onClick={encrypt} variant="outline" disabled={isDisabled()}>
+                  <Button onClick={encryptClicked} variant="outline" disabled={isDisabled()}>
                     <LockKeyhole className="mr-2 h-4 w-4" />
                     Encrypt
                   </Button>
-                  <Button onClick={decrypt} variant="outline" disabled={isDisabled()}>
+                  <Button onClick={decryptClicked} variant="outline" disabled={isDisabled()}>
                     <LockKeyholeOpen className="mr-2 h-4 w-4" />
                     Decrypt
                   </Button>
