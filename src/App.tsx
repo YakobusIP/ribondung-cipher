@@ -22,10 +22,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { RightAccordion } from "@/components/right-accordion";
+import { Progress } from "@/components/ui/progress";
 import { ChangeEvent, useState } from "react";
 import { executeMode, executeModeFile } from "./lib/blockmodes";
 import { downloadFile } from "./lib/utils";
-import { encrypt, decrypt } from "./lib/block-cipher";
 
 function App() {
   const [inputType, setInputType] = useState("text");
@@ -35,6 +35,7 @@ function App() {
   const [key, setKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [progress, setProgress] = useState(0);
   const [placeholder, setPlaceholder] = useState(
     "Result will be shown here..."
   );
@@ -58,42 +59,79 @@ function App() {
 
   const encryptClicked = async () => {
     setIsLoading(true);
+    setProgress(0);
+
+    const onProgressUpdate = (progress: number) => {
+      setProgress(progress);
+    };
+
     if (inputType === "text") {
-      executeMode(mode, inputText, key, encrypt, false, true, false).then((result) => {
-        setResult(result);
-        setIsLoading(false);
-      });
+      await executeMode(
+        mode,
+        inputText,
+        key,
+        false,
+        true,
+        false,
+        onProgressUpdate
+      )
+        .then((result) => {
+          setResult(result);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, encrypt, false).then((result) => {
-        downloadFile(result);
-        setPlaceholder("Encrypted file downloaded...")
-        setIsLoading(false);
-      });
+
+      await executeModeFile(mode, inputFile, key, false, onProgressUpdate)
+        .then((result) => {
+          downloadFile(result);
+          setPlaceholder("Encrypted file downloaded...");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
-  const decryptClicked= async () => {
+  const decryptClicked = async () => {
     setIsLoading(true);
+    setProgress(0);
+
+    const onProgressUpdate = (progress: number) => {
+      setProgress(progress);
+    };
+
     if (inputType === "text") {
       if (mode === "ecb" || mode === "cbc") {
-        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
-          setResult(result);
-          setIsLoading(false);
-        });
+        executeMode(mode, inputText, key, true, false, true, onProgressUpdate)
+          .then((result) => {
+            setResult(result);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
       } else {
-        executeMode(mode, inputText, key, decrypt, true, false, true).then((result) => {
-          setResult(result);
-          setIsLoading(false);
-        });
+        executeMode(mode, inputText, key, true, false, true, onProgressUpdate)
+          .then((result) => {
+            setResult(result);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
       }
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, decrypt, true).then((result) => {
-        downloadFile(result);
-        setPlaceholder("Decrypted file downloaded...")
-        setIsLoading(false);
-      });
+
+      executeModeFile(mode, inputFile, key, true, onProgressUpdate)
+        .then((result) => {
+          downloadFile(result);
+          setPlaceholder("Decrypted file downloaded...");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
@@ -227,19 +265,31 @@ function App() {
             <CardFooter>
               <div className="flex flex-col w-full gap-4">
                 <div className="flex gap-4">
-                  <Button onClick={encryptClicked} variant="outline" disabled={isDisabled()}>
+                  <Button
+                    onClick={encryptClicked}
+                    variant="outline"
+                    disabled={isDisabled()}
+                  >
                     <LockKeyhole className="mr-2 h-4 w-4" />
                     Encrypt
                   </Button>
-                  <Button onClick={decryptClicked} variant="outline" disabled={isDisabled()}>
+                  <Button
+                    onClick={decryptClicked}
+                    variant="outline"
+                    disabled={isDisabled()}
+                  >
                     <LockKeyholeOpen className="mr-2 h-4 w-4" />
                     Decrypt
                   </Button>
                 </div>
+                <div className="flex items-center gap-4">
+                  <Progress value={progress} />
+                  <p>{progress.toFixed(2)}%</p>
+                </div>
                 <div>
                   <Label>Result</Label>
                   <Textarea
-                    className="w-full"
+                    className="w-full resize-none"
                     rows={5}
                     placeholder={placeholder}
                     value={result}
