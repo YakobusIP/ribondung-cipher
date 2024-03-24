@@ -25,7 +25,6 @@ import { RightAccordion } from "@/components/right-accordion";
 import { ChangeEvent, useState } from "react";
 import { executeMode, executeModeFile } from "./lib/blockmodes";
 import { downloadFile } from "./lib/utils";
-import { encrypt, decrypt } from "./lib/block-cipher";
 
 function App() {
   const [inputType, setInputType] = useState("text");
@@ -38,6 +37,7 @@ function App() {
   const [placeholder, setPlaceholder] = useState(
     "Result will be shown here..."
   );
+  const [exeTime, setExeTime] = useState('');
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -57,6 +57,7 @@ function App() {
   };
 
   const encryptClicked = async () => {
+    const start_time = performance.now()
     setIsLoading(true);
     if (inputType === "text") {
       executeMode(mode, inputText, key, false, true, false).then((result) => {
@@ -64,6 +65,8 @@ function App() {
       })
       .finally(() => {
         setIsLoading(false);
+        const end_time = performance.now()
+        setExeTime((end_time - start_time).toFixed(2) + ' ms')
       });
     } else if (inputType === "file") {
       if (!inputFile) return;
@@ -73,19 +76,24 @@ function App() {
       })
       .finally(() => {
         setIsLoading(false);
+        const end_time = performance.now()
+        setExeTime((end_time - start_time).toFixed(2) + ' ms')
       });
     }
   };
 
   const decryptClicked= async () => {
     setIsLoading(true);
+    const start_time = performance.now()
     if (inputType === "text") {
       if (mode === "ecb" || mode === "cbc") {
-        executeMode(mode, inputText, key, true, false, true).then((result) => {
+        await executeMode(mode, inputText, key, true, false, true).then((result) => {
           setResult(result);
         })
         .finally(() => {
           setIsLoading(false);
+          const end_time = performance.now()
+          setExeTime((end_time - start_time).toFixed(2) + ' ms')
         });
       } else {
         executeMode(mode, inputText, key, true, false, true).then((result) => {
@@ -93,16 +101,20 @@ function App() {
         })
         .finally(() => {
           setIsLoading(false);
+          const end_time = performance.now()
+          setExeTime((end_time - start_time).toFixed(2) + ' ms')
         });
       }
     } else if (inputType === "file") {
       if (!inputFile) return;
-      executeModeFile(mode, inputFile, key, true).then((result) => {
+      await executeModeFile(mode, inputFile, key, true).then((result) => {
         downloadFile(result);
         setPlaceholder("Decrypted file downloaded...");
       })
       .finally(() => {
         setIsLoading(false);
+        const end_time = performance.now()
+        setExeTime((end_time - start_time).toFixed(2) + ' ms')
       });
     }
   };
@@ -247,7 +259,7 @@ function App() {
                   </Button>
                 </div>
                 <div>
-                  <Label>Result</Label>
+                  <Label>Result  {exeTime}</Label>
                   <Textarea
                     className="w-full"
                     rows={5}

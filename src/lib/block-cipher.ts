@@ -602,91 +602,95 @@ const decryptFeistel = (
 };
 
 // const encrypt = (plaintext: string, key: string, rounds: number) => {
-export const encrypt =async (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Promise<Uint8Array> => {
-  // // Check the key length
-  // const checkedKey = checkAndModifyKey(key);
+export const encrypt = (plaintext: Uint8Array, key: Uint8Array, rounds = 16): Promise<Uint8Array> => {
+  return new Promise((resolve) => {
+    // // Check the key length
+    // const checkedKey = checkAndModifyKey(key);
 
-  // // Check the plaintext and pad if needed
-  // const checkedPlaintext = checkAndModifyPlaintext(plaintext);
+    // // Check the plaintext and pad if needed
+    // const checkedPlaintext = checkAndModifyPlaintext(plaintext);
 
-  // Split the plaintext per 128-bit (16 bytes) block each
-  // const splitPlaintext = splitPlaintextTo128Bit(plaintext);
+    // Split the plaintext per 128-bit (16 bytes) block each
+    // const splitPlaintext = splitPlaintextTo128Bit(plaintext);
 
-  const splitBlocks = splitBytesIntoBlock(plaintext, 16);
+    const splitBlocks = splitBytesIntoBlock(plaintext, 16);
 
-  // Generate key
-  // const byteKey = stringToByte(checkedKey);
-  const splittedKey = splitBytesIntoBlock(key, key.length / 2);
-  const roundKeys: Array<Uint8Array> = [];
+    // Generate key
+    // const byteKey = stringToByte(checkedKey);
+    const splittedKey = splitBytesIntoBlock(key, key.length / 2);
+    const roundKeys: Array<Uint8Array> = [];
 
-  let bitLeft = bytesToBit(splittedKey[0]).join("");
-  let bitRight = bytesToBit(splittedKey[1]).join("");
-
-  for (let i = 0; i < rounds; i++) {
-    const roundKeyOutput = generateRoundKey(bitLeft, bitRight, i);
-    bitLeft = roundKeyOutput[0].join("");
-    bitRight = roundKeyOutput[1].join("");
-    const roundByteKey = roundKeyOutput[2] as Uint8Array;
-    roundKeys.push(roundByteKey);
-  }
-
-  const encryptedResults = [];
-
-  // Iterate each 16 bytes of plaintext block
-  for (const block of splitBlocks) {
-    // const blockBytes = stringToByte(block);
-
-    // Hard code each split to 4 bytes each (32-bit)
-    const splittedPlaintext = splitBytesIntoBlock(block, 4);
-    let plainTextA = splittedPlaintext[0];
-    let plainTextB = splittedPlaintext[1];
-    let plainTextC = splittedPlaintext[2];
-    let plainTextD = splittedPlaintext[3];
+    let bitLeft = bytesToBit(splittedKey[0]).join("");
+    let bitRight = bytesToBit(splittedKey[1]).join("");
 
     for (let i = 0; i < rounds; i++) {
-      const feistelResult = encryptFeistel(
-        plainTextA,
-        plainTextB,
-        plainTextC,
-        plainTextD,
-        roundKeys[i]
-      );
-      plainTextA = feistelResult[0];
-      plainTextB = feistelResult[1];
-      plainTextC = feistelResult[2];
-      plainTextD = feistelResult[3];
+      const roundKeyOutput = generateRoundKey(bitLeft, bitRight, i);
+      bitLeft = roundKeyOutput[0].join("");
+      bitRight = roundKeyOutput[1].join("");
+      const roundByteKey = roundKeyOutput[2] as Uint8Array;
+      roundKeys.push(roundByteKey);
     }
 
-    const encryptionResult = new Uint8Array([
-      ...plainTextA,
-      ...plainTextB,
-      ...plainTextC,
-      ...plainTextD
-    ]);
+    const encryptedResults = [];
 
-    encryptedResults.push(encryptionResult);
-  }
+    // Iterate each 16 bytes of plaintext block
+    for (const block of splitBlocks) {
+      // const blockBytes = stringToByte(block);
 
-  // Get the total length of all arrays.
-  let length = 0;
-  encryptedResults.forEach((item) => {
-    length += item.length;
+      // Hard code each split to 4 bytes each (32-bit)
+      const splittedPlaintext = splitBytesIntoBlock(block, 4);
+      let plainTextA = splittedPlaintext[0];
+      let plainTextB = splittedPlaintext[1];
+      let plainTextC = splittedPlaintext[2];
+      let plainTextD = splittedPlaintext[3];
+
+      for (let i = 0; i < rounds; i++) {
+        const feistelResult = encryptFeistel(
+          plainTextA,
+          plainTextB,
+          plainTextC,
+          plainTextD,
+          roundKeys[i]
+        );
+        plainTextA = feistelResult[0];
+        plainTextB = feistelResult[1];
+        plainTextC = feistelResult[2];
+        plainTextD = feistelResult[3];
+      }
+
+      const encryptionResult = new Uint8Array([
+        ...plainTextA,
+        ...plainTextB,
+        ...plainTextC,
+        ...plainTextD
+      ]);
+
+      encryptedResults.push(encryptionResult);
+    }
+
+    // Get the total length of all arrays.
+    let length = 0;
+    encryptedResults.forEach((item) => {
+      length += item.length;
+    });
+
+    // Create a new array with total length and merge all source arrays.
+    const mergedArray = new Uint8Array(length);
+    let offset = 0;
+    encryptedResults.forEach((item) => {
+      mergedArray.set(item, offset);
+      offset += item.length;
+    });
+
+    resolve(mergedArray);
   });
-
-  // Create a new array with total length and merge all source arrays.
-  const mergedArray = new Uint8Array(length);
-  let offset = 0;
-  encryptedResults.forEach((item) => {
-    mergedArray.set(item, offset);
-    offset += item.length;
-  });
-
-  return mergedArray;
 };
 
 // const decrypt = (ciphertext: string, key: string, rounds: number) => {
-export const decrypt = async (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) : Promise<Uint8Array>=> {
-  // const checkedKey = checkAndModifyKey(key);
+export const decrypt = (ciphertext: Uint8Array, key: Uint8Array, rounds = 16) : Promise<Uint8Array>=> {
+
+  return new Promise((resolve, reject) => {
+    // const checkedKey = checkAndModifyKey(key);
   // const splitCiphertext = splitPlaintextTo128Bit(ciphertext);
 
   // const byteKey = stringToByte(checkedKey);
@@ -758,5 +762,6 @@ export const decrypt = async (ciphertext: Uint8Array, key: Uint8Array, rounds = 
     offset += item.length;
   });
 
-  return mergedArray;
+  resolve(mergedArray);
+  });
 };
