@@ -2,60 +2,40 @@ import * as utils from "./blockmaniputils";
 import { encrypt, decrypt } from "./block-cipher";
 import { fileToUint8Array } from "./utils";
 
-async function ecb(
+function ecb(
   uint8bytes: Uint8Array,
   key_bytes: Uint8Array,
   isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<Uint8Array> {
+): Uint8Array {
   const blockSize = 16;
   const blocks = new Uint8Array(
     Math.ceil(uint8bytes.length / blockSize) * blockSize
   );
 
   const totalBlocks = Math.ceil(uint8bytes.length / blockSize);
-  let globalProgress = 0;
+  let blockIndex = 0;
 
-  if (!isDecrypt) {
-    for (let i = 0; i < uint8bytes.length; i += blockSize) {
-      const block = uint8bytes.slice(i, i + blockSize);
-      const encryptedBlock = await encrypt(
-        block,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      blocks.set(encryptedBlock, i);
-      globalProgress += 100 / totalBlocks;
-    }
-  } else {
-    for (let i = 0; i < uint8bytes.length; i += blockSize) {
-      const block = uint8bytes.slice(i, i + blockSize);
-      const encryptedBlock = await decrypt(
-        block,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      blocks.set(encryptedBlock, i);
-      globalProgress += 100 / totalBlocks;
-    }
+  for (let i = 0; i < uint8bytes.length; i += blockSize) {
+    const block = uint8bytes.slice(i, i + blockSize);
+    const encryptedBlock = isDecrypt
+      ? decrypt(block, key_bytes, 16)
+      : encrypt(block, key_bytes, 16);
+    blocks.set(encryptedBlock, i);
+    blockIndex++;
+
+    const progress = Math.min(((blockIndex + 1) / totalBlocks) * 100, 100);
+    onProgressUpdate(progress);
   }
   return blocks;
 }
 
-async function cbc(
+function cbc(
   uint8bytes: Uint8Array,
   key_bytes: Uint8Array,
   isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<Uint8Array> {
+): Uint8Array {
   const random = "THISISASECRETOKA";
   const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
   const blocks = new Uint8Array(
@@ -66,50 +46,40 @@ async function cbc(
   );
 
   const totalBlocks = Math.ceil(uint8bytes.length / blockSize);
-  let globalProgress = 0;
+  let blockIndex = 0;
 
   // the algorithm
   for (let i = 0; i < uint8bytes.length; i += blockSize) {
     const block = uint8bytes.slice(i, i + blockSize);
     if (!isDecrypt) {
       const result = utils.xor(block, iv);
-      const encrypted_block = await encrypt(
-        result,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
+      const encrypted_block = encrypt(result, key_bytes, 16);
       iv.set(encrypted_block);
       blocks.set(encrypted_block, i);
-      globalProgress += 100 / totalBlocks;
+      blockIndex++;
+
+      const progress = Math.min(((blockIndex + 1) / totalBlocks) * 100, 100);
+      onProgressUpdate(progress);
     } else {
-      const decrypted_block = await decrypt(
-        block,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
+      const decrypted_block = decrypt(block, key_bytes, 16);
       const result = utils.xor(decrypted_block, iv);
       iv.set(block, 0);
       blocks.set(result, i);
-      globalProgress += 100 / totalBlocks;
+      blockIndex++;
+
+      const progress = Math.min(((blockIndex + 1) / totalBlocks) * 100, 100);
+      onProgressUpdate(progress);
     }
   }
   return blocks;
 }
 
-async function cfb(
+function cfb(
   uint8bytes: Uint8Array,
   key_bytes: Uint8Array,
   isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<Uint8Array> {
+): Uint8Array {
   const random = "THISISASECRETOKA";
   const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
   const blocks = new Uint8Array(
@@ -119,59 +89,31 @@ async function cfb(
     utils.checkAndModifyPlaintext(random)
   );
   const n = iv.length;
-
-  const totalBlocks = Math.ceil(uint8bytes.length / blockSize);
-  let globalProgress = 0;
 
   // the algorithm (setiap 8 bits)
-  if (!isDecrypt) {
-    for (let i = 0; i < uint8bytes.length; i++) {
-      const encrypted_block = await encrypt(
-        iv,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const ci = uint8bytes[i] ^ encrypted_block[0];
-      iv.set(iv.slice(1, n), 0);
-      if (!isDecrypt) {
-        iv[n - 1] = ci;
-      } else {
-        iv[n - 1] = uint8bytes[i];
-      }
-      blocks[i] = ci;
-      globalProgress += 100 / totalBlocks;
-    }
-  } else {
-    for (let i = 0; i < uint8bytes.length; i++) {
-      const encrypted_block = await decrypt(
-        iv,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const ci = uint8bytes[i] ^ encrypted_block[0];
-      iv.set(iv.slice(1, n), 0);
+  for (let i = 0; i < uint8bytes.length; i++) {
+    const encrypted_block = encrypt(iv, key_bytes, 16);
+    const ci = uint8bytes[i] ^ encrypted_block[0];
+    iv.set(iv.slice(1, n), 0);
+    if (!isDecrypt) {
+      iv[n - 1] = ci;
+    } else {
       iv[n - 1] = uint8bytes[i];
-      blocks[i] = ci;
-      globalProgress += 100 / totalBlocks;
     }
+    blocks[i] = ci;
+
+    const progress = ((i + 1) / uint8bytes.length) * 100;
+    onProgressUpdate(progress);
   }
+
   return blocks;
 }
 
-async function ofb(
+function ofb(
   uint8bytes: Uint8Array,
   key_bytes: Uint8Array,
-  isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<Uint8Array> {
+): Uint8Array {
   const random = "THISISASECRETOKA";
   const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
   const blocks = new Uint8Array(
@@ -182,55 +124,25 @@ async function ofb(
   );
   const n = iv.length;
 
-  const totalBlocks = Math.ceil(uint8bytes.length / blockSize);
-  let globalProgress = 0;
+  // the algorithm (setiap 8 bits)
+  for (let i = 0; i < uint8bytes.length; i++) {
+    const encrypted_block = encrypt(iv, key_bytes, 16);
+    const ci = uint8bytes[i] ^ encrypted_block[0];
+    iv.set(iv.slice(1, n), 0);
+    iv[n - 1] = encrypted_block[0];
+    blocks[i] = ci;
 
-  if (!isDecrypt) {
-    // the algorithm (setiap 8 bits)
-    for (let i = 0; i < uint8bytes.length; i++) {
-      const encrypted_block = await encrypt(
-        iv,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const ci = uint8bytes[i] ^ encrypted_block[0];
-      iv.set(iv.slice(1, n), 0);
-      iv[n - 1] = encrypted_block[0];
-      blocks[i] = ci;
-      globalProgress += 100 / totalBlocks;
-    }
-  } else {
-    // the algorithm (setiap 8 bits)
-    for (let i = 0; i < uint8bytes.length; i++) {
-      const encrypted_block = await decrypt(
-        iv,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const ci = uint8bytes[i] ^ encrypted_block[0];
-      iv.set(iv.slice(1, n), 0);
-      iv[n - 1] = encrypted_block[0];
-      blocks[i] = ci;
-      globalProgress += 100 / totalBlocks;
-    }
+    const progress = ((i + 1) / uint8bytes.length) * 100;
+    onProgressUpdate(progress);
   }
   return blocks;
 }
 
-async function counter(
+function counter(
   uint8bytes: Uint8Array,
   key_bytes: Uint8Array,
-  isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<Uint8Array> {
+): Uint8Array {
   const blockSize = 16; // Assuming each block is 128 bits (16 bytes)
   const blocks = new Uint8Array(
     Math.ceil(uint8bytes.length / blockSize) * blockSize
@@ -238,56 +150,32 @@ async function counter(
   const counter = utils.stringTo128BitUint8Array("AAAAAAAAAAAAAAAA");
 
   const totalBlocks = Math.ceil(uint8bytes.length / blockSize);
-  let globalProgress = 0;
+  let blockIndex = 0;
 
-  if (!isDecrypt) {
-    for (let i = 0; i < uint8bytes.length; i += blockSize) {
-      const block = uint8bytes.slice(i, i + blockSize);
-      const encrypted = await encrypt(
-        counter,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const cipher = utils.xor(block, encrypted);
-      blocks.set(cipher, i);
-      utils.incrementCounter(counter);
-      globalProgress += 100 / totalBlocks;
-    }
-  } else {
-    for (let i = 0; i < uint8bytes.length; i += blockSize) {
-      const block = uint8bytes.slice(i, i + blockSize);
-      const encrypted = await decrypt(
-        counter,
-        key_bytes,
-        16,
-        (blockProgress) => {
-          const progress = (globalProgress + blockProgress / totalBlocks) / 100;
-          onProgressUpdate(progress * 100);
-        }
-      );
-      const cipher = utils.xor(block, encrypted);
-      blocks.set(cipher, i);
-      utils.incrementCounter(counter);
-      globalProgress += 100 / totalBlocks;
-    }
+  for (let i = 0; i < uint8bytes.length; i += blockSize) {
+    const block = uint8bytes.slice(i, i + blockSize);
+    const encrypted = encrypt(counter, key_bytes, 16);
+    const cipher = utils.xor(block, encrypted);
+    blocks.set(cipher, i);
+    utils.incrementCounter(counter);
+    blockIndex++;
+
+    const progress = Math.min(((blockIndex + 1) / totalBlocks) * 100, 100);
+    onProgressUpdate(progress);
   }
 
   return blocks;
 }
 
-export async function executeMode(
+export function executeMode(
   mode: string,
   text: string,
   key: string,
   fromBinary = false,
   toBinary = false,
-  decrypt = false,
+  isDecrypt = false,
   onProgressUpdate: (progress: number) => void
-): Promise<string> {
+): string {
   let text_bytes: Uint8Array;
   let result_bytes: Uint8Array;
   if (fromBinary) {
@@ -301,64 +189,35 @@ export async function executeMode(
 
   switch (mode) {
     case "ecb":
-      result_bytes = await ecb(
-        text_bytes,
-        key_bytes,
-        decrypt,
-        onProgressUpdate
-      );
+      result_bytes = ecb(text_bytes, key_bytes, isDecrypt, onProgressUpdate);
       break;
     case "cbc":
-      result_bytes = await cbc(
-        text_bytes,
-        key_bytes,
-        decrypt,
-        onProgressUpdate
-      );
+      result_bytes = cbc(text_bytes, key_bytes, isDecrypt, onProgressUpdate);
       break;
     case "cfb":
-      result_bytes = await cfb(
-        text_bytes,
-        key_bytes,
-        decrypt,
-        onProgressUpdate
-      );
+      result_bytes = cfb(text_bytes, key_bytes, isDecrypt, onProgressUpdate);
       break;
     case "ofb":
-      result_bytes = await ofb(
-        text_bytes,
-        key_bytes,
-        decrypt,
-        onProgressUpdate
-      );
+      result_bytes = ofb(text_bytes, key_bytes, onProgressUpdate);
       break;
     case "ctr":
-      result_bytes = await counter(
-        text_bytes,
-        key_bytes,
-        decrypt,
-        onProgressUpdate
-      );
+      result_bytes = counter(text_bytes, key_bytes, onProgressUpdate);
       break;
     default:
       return "Invalid mode";
   }
   if (toBinary) {
-    return Promise.resolve(
-      utils.uint8ArrayToBinaryOrString(result_bytes, true)
-    );
+    return utils.uint8ArrayToBinaryOrString(result_bytes, true);
   } else {
-    return Promise.resolve(
-      utils.uint8ArrayToBinaryOrString(result_bytes, false)
-    );
+    return utils.uint8ArrayToBinaryOrString(result_bytes, false);
   }
 }
 
-export async function executeModeFile(
+export function executeModeFile(
   mode: string,
   file: File,
   key: string,
-  decrypt = false,
+  isDecrypt = false,
   onProgressUpdate: (progress: number) => void
 ): Promise<File> {
   return new Promise((resolve, reject) => {
@@ -371,51 +230,41 @@ export async function executeModeFile(
       let result_bytes: Uint8Array;
       switch (mode) {
         case "ecb":
-          result_bytes = await ecb(
+          result_bytes = ecb(
             text_bytes,
             key_bytes,
-            decrypt,
+            isDecrypt,
             onProgressUpdate
           );
           break;
         case "cbc":
-          result_bytes = await cbc(
+          result_bytes = cbc(
             text_bytes,
             key_bytes,
-            decrypt,
+            isDecrypt,
             onProgressUpdate
           );
           break;
         case "cfb":
-          result_bytes = await cfb(
+          result_bytes = cfb(
             text_bytes,
             key_bytes,
-            decrypt,
+            isDecrypt,
             onProgressUpdate
           );
           break;
         case "ofb":
-          result_bytes = await ofb(
-            text_bytes,
-            key_bytes,
-            decrypt,
-            onProgressUpdate
-          );
+          result_bytes = ofb(text_bytes, key_bytes, onProgressUpdate);
           break;
         case "ctr":
-          result_bytes = await counter(
-            text_bytes,
-            key_bytes,
-            decrypt,
-            onProgressUpdate
-          );
+          result_bytes = counter(text_bytes, key_bytes, onProgressUpdate);
           break;
         default:
           reject("Invalid mode");
           return;
       }
       const filename = file.name.split(".");
-      if (decrypt) {
+      if (isDecrypt) {
         const resultFile = new File(
           [result_bytes],
           `${filename[0]}_decrypted_${mode}.${filename[1] || file.type}`,

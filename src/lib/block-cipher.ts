@@ -448,12 +448,11 @@ const decryptFeistel = (
 };
 
 // const encrypt = (plaintext: string, key: string, rounds: number) => {
-export const encrypt = async (
+export const encrypt = (
   plaintext: Uint8Array,
   key: Uint8Array,
-  rounds = 16,
-  onProgress: (progress: number) => void
-): Promise<Uint8Array> => {
+  rounds = 16
+): Uint8Array => {
   const splitBlocks = splitBytesIntoBlock(plaintext, 16);
 
   const splittedKey = splitBytesIntoBlock(key, key.length / 2);
@@ -471,9 +470,6 @@ export const encrypt = async (
   }
 
   const encryptedResults = [];
-
-  const totalProgress = splitBlocks.length * rounds;
-  let completedProgress = 0;
 
   // Iterate each 16 bytes of plaintext block
   for (const block of splitBlocks) {
@@ -496,11 +492,6 @@ export const encrypt = async (
       plainTextB = feistelResult[1];
       plainTextC = feistelResult[2];
       plainTextD = feistelResult[3];
-
-      completedProgress++;
-      const progress = (completedProgress / totalProgress) * 100;
-      onProgress(progress);
-      await new Promise((resolve) => setTimeout(resolve, 0));
     }
 
     const encryptionResult = new Uint8Array([
@@ -530,12 +521,11 @@ export const encrypt = async (
   return mergedArray;
 };
 
-export const decrypt = async (
+export const decrypt = (
   ciphertext: Uint8Array,
   key: Uint8Array,
-  rounds = 16,
-  onProgress: (progress: number) => void
-): Promise<Uint8Array> => {
+  rounds = 16
+): Uint8Array => {
   const roundKeys: Array<Uint8Array> = []; // Store all round keys
 
   const splittedKey = splitBytesIntoBlock(key, key.length / 2);
@@ -555,9 +545,6 @@ export const decrypt = async (
   }
 
   const decryptionResults = [];
-
-  const totalProgress = splitBlocks.length * rounds;
-  let completedProgress = 0;
 
   for (const block of splitBlocks) {
     const splittedCipherText = splitBytesIntoBlock(block, 4);
@@ -580,11 +567,6 @@ export const decrypt = async (
       cipherTextB = feistelResult[1];
       cipherTextC = feistelResult[2];
       cipherTextD = feistelResult[3];
-
-      completedProgress++;
-      const progress = (completedProgress / totalProgress) * 100;
-      onProgress(progress);
-      await new Promise((resolve) => setTimeout(resolve, 0));
     }
 
     const decryptionResult = new Uint8Array([
