@@ -52,6 +52,7 @@ function App() {
 
   const [startTime, setStartTime] = useState(0);
   const [worker, setWorker] = useState<Worker>();
+  const [exeTime, setExeTime] = useState("");
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -125,6 +126,8 @@ function App() {
 
     const minutes: number = Math.floor(exeTime / 60000);
     const seconds: number = Math.floor((exeTime % 60000) / 1000);
+
+    setExeTime(exeTimeString);
 
     toast({
       title: `${isDecrypt ? "Decryption" : "Encryption"} complete`,
@@ -336,7 +339,7 @@ function App() {
                   <p>{progress.toFixed(2)}%</p>
                 </div>
                 <div>
-                  <Label>Result</Label>
+                  <Label>Result {exeTime}</Label>
                   <Textarea
                     className="w-full resize-none"
                     rows={5}
