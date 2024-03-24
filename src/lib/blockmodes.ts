@@ -181,7 +181,8 @@ export function executeMode(
   if (fromBinary) {
     text_bytes = utils.binaryStringToUint8Array(text);
   } else {
-    text_bytes = utils.stringTo128BitUint8Array(text);
+    const padded_text = utils.checkAndModifyPlaintext(text);
+    text_bytes = utils.stringTo128BitUint8Array(padded_text);
   }
   const key_bytes = utils.stringTo128BitUint8Array(
     utils.checkAndModifyKey(key)

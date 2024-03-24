@@ -22,7 +22,7 @@ export const byteToString = (bytes: AllowSharedBufferSource) => {
 
 export const padBytes = (byteArray: Uint8Array, blockSize: number) => {
   const paddingLength = blockSize - (byteArray.length % blockSize);
-  const padding = new Uint8Array(paddingLength).fill(0); // pad with 0
+  const padding = new Uint8Array(paddingLength).fill(32); // pad with 0
   return new Uint8Array([...byteArray, ...padding]);
 };
 

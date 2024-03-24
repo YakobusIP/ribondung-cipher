@@ -1,3 +1,5 @@
+import { stringToByte } from "./helper";
+
 /* Convert String to Uint8Array*/
 export function stringTo128BitUint8Array(str: string): Uint8Array {
   str = checkAndModifyPlaintext(str);
@@ -21,9 +23,10 @@ export function binaryStringToUint8Array(binaryString: string) {
 /* Pads the plaintext to be a multiple of 16 bytes (128 bits each block) */
 export function checkAndModifyPlaintext(plaintext: string): string {
   let endPlaintext = plaintext;
-  if (plaintext.length % 16 != 0) {
+  const bytePlainText = stringToByte(plaintext);
+  if (bytePlainText.length % 16 != 0) {
     // pad the plaintext
-    for (let i = plaintext.length; i % 16 != 0; i++) {
+    for (let i = bytePlainText.length; i % 16 != 0; i++) {
       endPlaintext += " ";
     }
   }
@@ -130,7 +133,7 @@ export function uint8ArrayToBinaryOrString(
       ""
     );
   } else {
-    return String.fromCharCode.apply(null, Array.from(uint8Array));
+    return new TextDecoder("utf-8").decode(uint8Array);
   }
 }
 

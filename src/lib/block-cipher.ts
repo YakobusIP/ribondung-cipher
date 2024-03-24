@@ -473,8 +473,6 @@ export const encrypt = (
 
   // Iterate each 16 bytes of plaintext block
   for (const block of splitBlocks) {
-    // const blockBytes = stringToByte(block);
-
     // Hard code each split to 4 bytes each (32-bit)
     const splittedPlaintext = splitBytesIntoBlock(block, 4);
     let plainTextA = splittedPlaintext[0];
