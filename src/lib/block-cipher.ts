@@ -481,44 +481,66 @@ export const encrypt = (
     let plainTextD = splittedPlaintext[3];
 
     for (let i = 0; i < rounds; i++) {
-      const feistelResult = encryptFeistel(
-        plainTextA,
-        plainTextB,
-        plainTextC,
-        plainTextD,
-        roundKeys[i]
-      );
-      plainTextA = feistelResult[0];
-      plainTextB = feistelResult[1];
-      plainTextC = feistelResult[2];
-      plainTextD = feistelResult[3];
+      const roundKeyOutput = generateRoundKey(bitLeft, bitRight, i);
+      bitLeft = roundKeyOutput[0].join("");
+      bitRight = roundKeyOutput[1].join("");
+      const roundByteKey = roundKeyOutput[2] as Uint8Array;
+      roundKeys.push(roundByteKey);
     }
 
-    const encryptionResult = new Uint8Array([
-      ...plainTextA,
-      ...plainTextB,
-      ...plainTextC,
-      ...plainTextD
-    ]);
+    const encryptedResults = [];
 
-    encryptedResults.push(encryptionResult);
-  }
+    // Iterate each 16 bytes of plaintext block
+    for (const block of splitBlocks) {
+      // const blockBytes = stringToByte(block);
 
-  // Get the total length of all arrays.
-  let length = 0;
-  encryptedResults.forEach((item) => {
-    length += item.length;
+      // Hard code each split to 4 bytes each (32-bit)
+      const splittedPlaintext = splitBytesIntoBlock(block, 4);
+      let plainTextA = splittedPlaintext[0];
+      let plainTextB = splittedPlaintext[1];
+      let plainTextC = splittedPlaintext[2];
+      let plainTextD = splittedPlaintext[3];
+
+      for (let i = 0; i < rounds; i++) {
+        const feistelResult = encryptFeistel(
+          plainTextA,
+          plainTextB,
+          plainTextC,
+          plainTextD,
+          roundKeys[i]
+        );
+        plainTextA = feistelResult[0];
+        plainTextB = feistelResult[1];
+        plainTextC = feistelResult[2];
+        plainTextD = feistelResult[3];
+      }
+
+      const encryptionResult = new Uint8Array([
+        ...plainTextA,
+        ...plainTextB,
+        ...plainTextC,
+        ...plainTextD
+      ]);
+
+      encryptedResults.push(encryptionResult);
+    }
+
+    // Get the total length of all arrays.
+    let length = 0;
+    encryptedResults.forEach((item) => {
+      length += item.length;
+    });
+
+    // Create a new array with total length and merge all source arrays.
+    const mergedArray = new Uint8Array(length);
+    let offset = 0;
+    encryptedResults.forEach((item) => {
+      mergedArray.set(item, offset);
+      offset += item.length;
+    });
+
+    resolve(mergedArray);
   });
-
-  // Create a new array with total length and merge all source arrays.
-  const mergedArray = new Uint8Array(length);
-  let offset = 0;
-  encryptedResults.forEach((item) => {
-    mergedArray.set(item, offset);
-    offset += item.length;
-  });
-
-  return mergedArray;
 };
 
 export const decrypt = (
@@ -593,5 +615,6 @@ export const decrypt = (
     offset += item.length;
   });
 
-  return mergedArray;
+  resolve(mergedArray);
+  });
 };

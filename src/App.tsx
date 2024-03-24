@@ -49,6 +49,7 @@ function App() {
   const [placeholder, setPlaceholder] = useState(
     "Result will be shown here..."
   );
+  const [exeTime, setExeTime] = useState('');
 
   const [startTime, setStartTime] = useState(0);
   const [worker, setWorker] = useState<Worker>();
@@ -340,7 +341,7 @@ function App() {
                   <p>{progress.toFixed(2)}%</p>
                 </div>
                 <div>
-                  <Label>Result</Label>
+                  <Label>Result  {exeTime}</Label>
                   <Textarea
                     className="w-full resize-none"
                     rows={5}
