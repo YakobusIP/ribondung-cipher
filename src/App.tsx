@@ -49,7 +49,6 @@ function App() {
   const [placeholder, setPlaceholder] = useState(
     "Result will be shown here..."
   );
-  const [exeTime, setExeTime] = useState('');
 
   const [startTime, setStartTime] = useState(0);
   const [worker, setWorker] = useState<Worker>();
@@ -129,7 +128,7 @@ function App() {
 
     toast({
       title: `${isDecrypt ? "Decryption" : "Encryption"} complete`,
-      description: `Process tooked ${minutes} m ${seconds} s (${exeTimeString})`
+      description: `Process took ${minutes} m ${seconds} s (${exeTimeString})`
     });
   }, [isDecrypt, startTime, toast]);
 
@@ -148,15 +147,11 @@ function App() {
         if (!result) return;
         setResult(result);
         setIsLoading(false);
-
-        // calculateExeTime();
       } else if (type === "fileResult") {
         if (!fileResult) return;
         downloadFile(fileResult);
         setPlaceholder("File downloaded...");
         setIsLoading(false);
-
-        // calculateExeTime();
       }
     };
 
@@ -330,7 +325,7 @@ function App() {
                       </>
                     ) : (
                       <>
-                        <LockKeyhole className="mr-2 h-4 w-4" />
+                        <LockKeyholeOpen className="mr-2 h-4 w-4" />
                         Decrypt
                       </>
                     )}
@@ -341,7 +336,7 @@ function App() {
                   <p>{progress.toFixed(2)}%</p>
                 </div>
                 <div>
-                  <Label>Result  {exeTime}</Label>
+                  <Label>Result</Label>
                   <Textarea
                     className="w-full resize-none"
                     rows={5}
